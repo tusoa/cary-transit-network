@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triangle Transit Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: policy problem strip, legend, layered network map centered on GoCary (funders top, operators middle, town services and private providers bottom), actor cards */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1d2430; --muted:#5b6575; --hair:#d8dde5;
+  --gov:#2357a8; --gov-tint:#e8eef9;
+  --np:#7a46b8; --np-tint:#f1eafa;
+  --pv:#c0640e; --pv-tint:#fcefe1;
+  --fund:#1d8a4a; --formal:#2b3440; --informal:#8b6b9e;
+  --press:#c22f45; --press-tint:#fde8eb;
+  --halo:#f6f7f9;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1a2029; --fg:#e6eaf0; --muted:#9aa4b3; --hair:#2e3744;
+  --gov:#6f9be6; --gov-tint:#1b2a42; --np:#b48be6; --np-tint:#2a2140; --pv:#eb9a4e; --pv-tint:#3a2a19;
+  --fund:#46c27a; --formal:#c9d1dc; --informal:#c3a2d6; --press:#f0697d; --press-tint:#3d1a21; --halo:#12161d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --fg:#e6eaf0; --muted:#9aa4b3; --hair:#2e3744;
+  --gov:#6f9be6; --gov-tint:#1b2a42; --np:#b48be6; --np-tint:#2a2140; --pv:#eb9a4e; --pv-tint:#3a2a19;
+  --fund:#46c27a; --formal:#c9d1dc; --informal:#c3a2d6; --press:#f0697d; --press-tint:#3d1a21; --halo:#12161d; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px;display:grid;gap:22px}
+.eyebrow{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.12em;color:var(--press);margin:0 0 8px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,4vw,46px);letter-spacing:.01em;margin:0;line-height:1.05;text-wrap:balance}
+.lede{margin:8px 0 0;color:var(--muted);max-width:72ch}
+.policy{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pcol{background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:14px 16px;min-width:0}
+.pcol h2{font:700 19px/1.1 var(--f-display);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.pcol h2 .dot{width:10px;height:10px;border-radius:50%}
+.pcol ul{margin:0;padding-left:17px;font-size:13.5px;display:grid;gap:4px}
+.legend{display:flex;flex-wrap:wrap;gap:14px 34px;padding:14px 18px;background:var(--surface);border:1px solid var(--hair);border-radius:8px}
+.lg{display:grid;gap:6px;min-width:0}
+.lg h2{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
+.lg ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px}
+.lg li{display:flex;align-items:center;gap:7px}
+.sw{width:16px;height:12px;border-radius:3px;border:2px solid}
+.sw.gov{background:var(--gov-tint);border-color:var(--gov)}
+.sw.np{background:var(--np-tint);border-color:var(--np)}
+.sw.pv{background:var(--pv-tint);border-color:var(--pv)}
+.ln{width:34px;height:0;border-top:2.5px solid}
+.ln.fund{border-color:var(--fund)} .ln.formal{border-color:var(--formal)} .ln.inf{border-top-style:dashed;border-color:var(--informal)}
+.ln.press{border-top:3px dotted var(--press)}
+.pill{font:600 10px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--press);background:var(--press-tint);border:1.5px solid var(--press);border-radius:10px;padding:3px 7px}
+.chip{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:1.5px solid var(--hair);font:500 11px/1 var(--f-mono);color:var(--fg);background:var(--surface)}
+.map{background:var(--surface);border:1px solid var(--hair);border-radius:8px;overflow-x:auto}
+.map svg{display:block;width:100%;min-width:980px;height:auto}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+
+.node rect.box{stroke-width:2}
+.node.gov rect.box{fill:var(--gov-tint);stroke:var(--gov)}
+.node.np rect.box{fill:var(--np-tint);stroke:var(--np)}
+.node.pv rect.box{fill:var(--pv-tint);stroke:var(--pv)}
+.node.hot rect.box{stroke-width:3.5}
+.node .nm{font:700 19px var(--f-display);fill:var(--fg);letter-spacing:.01em}
+.node .sb{font:500 10.5px var(--f-body);text-transform:uppercase;letter-spacing:.07em}
+.node.gov .sb{fill:var(--gov)} .node.np .sb{fill:var(--np)} .node.pv .sb{fill:var(--pv)}
+.node .ch circle{fill:var(--surface);stroke:var(--hair);stroke-width:1.2}
+.node .ch text{font:500 10px var(--f-mono);fill:var(--fg)}
+.node .bd rect{fill:var(--press-tint);stroke:var(--press);stroke-width:1.5}
+.node .bd text{font:600 9.5px var(--f-body);fill:var(--press);letter-spacing:.06em}
+.node{cursor:pointer;outline:none}
+.node:focus-visible rect.box{stroke-width:4}
+.edge{fill:none;stroke-width:2.2}
+.edge.fund{stroke:var(--fund);stroke-width:2.6}
+.edge.formal{stroke:var(--formal)}
+.edge.inf{stroke:var(--informal);stroke-dasharray:6 5}
+.edge.press{stroke:var(--press);stroke-width:3;stroke-dasharray:1 6;stroke-linecap:round}
+.elab{font:500 11px var(--f-body);paint-order:stroke;stroke:var(--halo);stroke-width:4px;stroke-linejoin:round}
+.elab.fund{fill:var(--fund)} .elab.formal{fill:var(--formal)} .elab.inf{fill:var(--informal);font-style:italic} .elab.press{fill:var(--press);font-weight:600}
+.mk-fund{fill:var(--fund)} .mk-formal{fill:var(--formal)} .mk-press{fill:var(--press)}
+.tier{font:600 10px var(--f-body);fill:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+svg.focus .edge,svg.focus .elab,svg.focus .node{opacity:.13;transition:opacity .15s}
+svg.focus .on{opacity:1!important}
+@media (prefers-reduced-motion:reduce){svg.focus .edge,svg.focus .elab,svg.focus .node{transition:none}}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card h3{margin:0;font:700 20px/1.1 var(--f-display);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.tag{font:600 10px/1 var(--f-body);text-transform:uppercase;letter-spacing:.08em;padding:4px 7px;border-radius:4px;white-space:nowrap}
+.tag.gov{color:var(--gov);background:var(--gov-tint)} .tag.np{color:var(--np);background:var(--np-tint)} .tag.pv{color:var(--pv);background:var(--pv-tint)}
+.card p{margin:0;font-size:13.5px}
+.card .role{font-size:13px;color:var(--press);font-weight:600}
+.k{font:600 10.5px var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:2px}
+.res{display:flex;flex-wrap:wrap;gap:5px}
+.res span{font-size:12px;border:1px solid var(--hair);border-radius:12px;padding:1px 8px}
+.card ul{margin:0;padding-left:16px;font-size:13.5px;display:grid;gap:3px}
+.t-fund{color:var(--fund);font-weight:600}
+h2.sec{font:700 24px var(--f-display);margin:8px 0 0}
+</style>
+
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Policy issue · Transit in growing towns</p>
+    <h1>When Demand Outruns Capacity: Cary and Its Neighbors</h1>
+    <p class="lede">Cary, Apex, and Morrisville are adding residents and riders faster than the transit network can add service. This map shows who funds, governs, operates, and fills gaps around GoCary, and whether those ties run on formal accountability or informal trust. Hover or tap an actor to isolate its ties.</p>
+  </header>
+
+  <section class="policy" aria-label="The policy problem">
+    <div class="pcol"><h2><span class="dot" style="background:var(--press)"></span>Demand is rising</h2><ul>
+      <li>Fast population growth in Cary, Apex, and Morrisville</li>
+      <li>GoApex ADA door-to-door trips moved from GoWake Access to GoCary Door to Door on April 18, 2026</li>
+      <li>On-demand shuttles raise expectations for quick, flexible trips</li></ul></div>
+    <div class="pcol"><h2><span class="dot" style="background:var(--formal)"></span>Capacity lags</h2><ul>
+      <li>GoCary relies on drivers supplied by its contractor, MV Transportation</li>
+      <li>New service waits on Wake Transit plan cycles and federal grant timelines</li>
+      <li>Town services for Apex and Morrisville run on GoCary's staff and fleet</li></ul></div>
+    <div class="pcol"><h2><span class="dot" style="background:var(--fund)"></span>Who can close the gap</h2><ul>
+      <li>Wake County: transit tax dollars and plan priorities</li>
+      <li>FTA and NCDOT: grants, with conditions attached</li>
+      <li>GoCary: contract terms with MVT and service design</li>
+      <li>Private providers: absorb trips public service cannot</li></ul></div>
+  </section>
+
+  <section class="legend" aria-label="Legend">
+    <div class="lg"><h2>Sector</h2><ul>
+      <li><span class="sw gov"></span>Government</li>
+      <li><span class="sw np"></span>Nonprofit</li>
+      <li><span class="sw pv"></span>Private sector</li></ul></div>
+    <div class="lg"><h2>Ties</h2><ul>
+      <li><span class="ln fund"></span>Funding</li>
+      <li><span class="ln formal"></span>Formal accountability (contract, oversight, legal authority)</li>
+      <li><span class="ln inf"></span>Informal (reputation, norms, relationships)</li>
+      <li><span class="ln press"></span>Demand pressure</li></ul></div>
+    <div class="lg"><h2>Status</h2><ul>
+      <li><span class="pill">Demand ↑</span>Rising ridership or trip requests</li>
+      <li><span class="pill">Capacity limit</span>Bottleneck on adding service</li></ul></div>
+    <div class="lg"><h2>Brings</h2><ul>
+      <li><span class="chip">A</span>Authority</li><li><span class="chip">$</span>Money</li>
+      <li><span class="chip">E</span>Expertise</li><li><span class="chip">L</span>Legitimacy</li>
+      <li><span class="chip">W</span>Workforce</li><li><span class="chip">I</span>Information</li>
+      <li><span class="chip">C</span>Community ties</li></ul></div>
+  </section>
+
+  <div class="map">
+    <svg id="net" viewBox="0 0 1340 960" role="img" aria-label="Network map of transit stakeholders around GoCary">
+      <defs>
+        <marker id="m-fund" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-fund" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="m-formal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-formal" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="m-press" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-press" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <g id="tiers"></g><g id="edges"></g><g id="labels"></g><g id="nodes"></g>
+    </svg>
+  </div>
+  <p class="hint">The bracket from NCDOT reaches GoTriangle and every operator, reflecting state oversight across the system. Red badges mark where demand is building and where capacity is constrained.</p>
+
+  <h2 class="sec">Actors</h2>
+  <section class="cards" id="cards"></section>
+</div>
+
+<script>
+(function(){
+const R={A:"Authority",$:"Money",E:"Expertise",L:"Legitimacy",W:"Workforce",I:"Information",C:"Community ties"};
+const N={
+ fta:{x:200,y:80,n:"USDOT FTA",s:"gov",sub:"Federal",r:["A","$","I"],
+   d:"Federal Transit Administration. Sets federal rules and awards formula and capital grants.",
+   role:"Grant money can expand capacity, but on federal timelines.",
+   f:["$ Federal grants to GoTriangle, GoRaleigh, GoCary","Grant conditions: ADA, Title VI, reporting, audits"],i:["Sets national norms for service and accessibility"]},
+ ncdot:{x:640,y:80,n:"NCDOT",s:"gov",sub:"State · Integrated Mobility",r:["A","$","E"],
+   d:"State DOT. Oversees public transportation statewide and administers state transit aid.",
+   role:"State aid and oversight shape how fast agencies can scale.",
+   f:["Oversight and state aid to GoTriangle and all operators","State grant compliance requirements"],i:["Long working ties with NCPTA as the industry's voice"]},
+ wake:{x:900,y:240,n:"Wake County",s:"gov",sub:"County",r:["$","L","A"],
+   d:"Levies the voter-approved transit sales tax behind the Wake Transit Plan; runs GoWake Access through Health & Human Services.",
+   role:"Main local lever: where transit tax dollars go decides which towns get new service.",
+   f:["$ Transit tax to GoTriangle, GoRaleigh, GoCary, GoWake Access","Legal authority over GoWake Access (county program)"],i:["Voter mandate gives it legitimacy among towns competing for service"]},
+ gotri:{x:420,y:400,n:"GoTriangle",s:"gov",sub:"Regional transit authority",r:["A","$","E","I"],
+   d:"Regional authority running cross-county routes and regional planning.",
+   role:"Regional routes connect growing towns to job centers.",
+   f:["$ FTA grants and Wake transit tax","Under NCDOT oversight"],i:["Regional coordinator with GoCary and GoRaleigh","Peer ties through NCPTA"]},
+ ncpta:{x:1220,y:400,n:"NCPTA",s:"np",sub:"Nonprofit association",r:["E","I","L"],
+   d:"North Carolina Public Transportation Association. Statewide trade group for transit systems.",
+   role:"Spreads practices for growing systems and voices needs to the state.",
+   f:["No formal authority over agencies"],i:["Advocacy and trusted info channel with NCDOT","Training and shared norms with GoTriangle and GoCary"]},
+ goral:{x:200,y:640,n:"GoRaleigh",s:"gov",sub:"Local operator",r:["W","C","$"],
+   d:"City of Raleigh's bus system, the largest in the Wake network.",
+   role:"Neighbor whose network Cary riders connect into.",
+   f:["$ FTA grants and Wake transit tax","Under NCDOT oversight"],i:["Shared riders and transfers with GoCary","Coordination with GoTriangle"]},
+ gocary:{x:660,y:640,n:"GoCary",s:"gov",sub:"Local operator · Town of Cary",r:["A","$","C"],badge:"Demand > Capacity",
+   d:"Town of Cary's transit system. Also operates GoApex, Morrisville Smart Shuttle, and GoCary Door to Door.",
+   role:"Center of the problem: absorbing new towns and new trips with contracted drivers.",
+   f:["$ Wake transit tax and FTA grants","Under NCDOT oversight","Contracts MVT for drivers","Operates GoApex and Morrisville Smart Shuttle","Took on Apex ADA trips from GoWake Access (Apr 2026)"],i:["Reputation depends on MVT's service quality","Unmet trips spill to private providers"]},
+ gowake:{x:1100,y:640,n:"GoWake Access",s:"gov",sub:"County · Health & Human Svcs",r:["W","C","$"],
+   d:"Wake County door-to-door shared rides for older adults, people with disabilities, rural residents, and sponsored riders.",
+   role:"Shifted Apex ADA trips to GoCary, adding load to Cary's system.",
+   f:["$ Wake transit tax (Wake Transit Plan trips)","County program under Wake County HHS","Under NCDOT oversight"],i:["Case-worker ties to riders who depend on it","Overlaps with private ride providers"]},
+ mvt:{x:300,y:850,n:"MV Transportation",s:"pv",sub:"Private contractor",r:["W","E"],badge:"Capacity limit",
+   d:"Private transit contractor supplying GoCary's drivers.",
+   role:"Driver supply sets how much service GoCary can add.",
+   f:["Service contract with GoCary"],i:["Repeat-contract reputation with Triangle agencies"]},
+ goapex:{x:560,y:850,n:"GoApex",s:"gov",sub:"Town of Apex service",r:["C"],badge:"Demand ↑",
+   d:"Town of Apex fixed route, operated by GoCary.",
+   role:"Fast-growing town buying service from a neighbor.",
+   f:["Operated by GoCary"],i:["Peer small-town service alongside Morrisville"]},
+ morr:{x:800,y:850,n:"Morrisville Smart Shuttle",s:"gov",sub:"Town of Morrisville",r:["C"],badge:"Demand ↑",
+   d:"Town of Morrisville on-demand shuttle, operated by GoCary.",
+   role:"On-demand model where wait times reveal capacity limits.",
+   f:["Operated by GoCary"],i:["Peer small-town service alongside GoApex"]},
+ charlene:{x:1140,y:850,n:"Charlene's Safe Ride",s:"pv",sub:"Private ride service",r:["W","C"],
+   d:"Small private ride service in the Triangle, booked on request.",
+   role:"Market alternative that absorbs trips public service cannot.",
+   f:["No contract shown with public agencies"],i:["Picks up unmet demand from GoCary riders","Overlapping rider market with GoWake Access"]}
+};
+const E=[
+ ["fta","gotri","fund","$ Federal grants",0],
+ ["fta","goral","fund","$ Federal grants",0],
+ ["fta","gocary","fund","$ Federal grants",-200],
+ ["wake","gotri","fund","$ Transit tax",0],
+ ["wake","goral","fund","$ Transit tax",0],
+ ["wake","gocary","fund","$ Transit tax",0],
+ ["wake","gowake","fund","$ Transit tax",50],
+ ["wake","gowake","formal","County HHS program",-50],
+ ["gocary","goapex","formal","Operates",0],
+ ["gocary","morr","formal","Operates",0],
+ ["gocary","mvt","formal","Contract: drivers",0],
+ ["gowake","gocary","press","Apex ADA trips move to GoCary, Apr 2026",-60],
+ ["gocary","charlene","press","Unmet trips go private",-50],
+ ["ncpta","ncdot","inf","Advocacy, trusted info",-170],
+ ["ncpta","gotri","inf","Peer norms, training",-28],
+ ["ncpta","gocary","inf","Statewide peer network",40],
+ ["gotri","gocary","inf","Regional coordination",-40],
+ ["gotri","goral","inf","Regional coordination",-30],
+ ["goral","gocary","inf","Shared riders",-34],
+ ["gowake","charlene","inf","Overlapping riders",-30],
+ ["goapex","morr","inf","Peer town services",110]
+];
+const W=204,H=80,NS="http://www.w3.org/2000/svg",svg=document.getElementById("net");
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function clip(c,t){const dx=t.x-c.x,dy=t.y-c.y;const s=Math.min((W/2+5)/Math.abs(dx||1e-6),(H/2+5)/Math.abs(dy||1e-6));return{x:c.x+dx*s,y:c.y+dy*s}}
+const ge=document.getElementById("edges"),gl=document.getElementById("labels"),gn=document.getElementById("nodes"),gt=document.getElementById("tiers");
+[["Federal & state",24],["Local funder",186],["Regional",346],["Operators",586],["Town services & private providers",796]].forEach(([t,y])=>{const x=el("text",{x:1330,y:y,class:"tier","text-anchor":"end"},gt);x.textContent=t});
+const ops=["gotri","goral","gocary","gowake"];
+el("path",{d:"M640,120 V168 H40 V540 H1100",class:"edge formal","data-a":"ncdot","data-b":ops.join(" ")},ge);
+ops.forEach(id=>{const n=N[id];const y2=id==="gotri"?n.y+H/2+5:n.y-H/2-14;el("path",{d:`M${n.x},540 V${y2}`,class:"edge formal","marker-end":"url(#m-formal)","data-a":"ncdot","data-b":id},ge)});
+const bl=el("text",{x:60,y:160,class:"elab formal","data-a":"ncdot","data-b":ops.join(" ")},gl);bl.textContent="NCDOT oversight, grant compliance & state transit aid";
+E.forEach(([a,b,t,lab,cv])=>{const A=N[a],B=N[b];const mx=(A.x+B.x)/2,my=(A.y+B.y)/2;const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy);const px=dy/L,py=-dx/L;
+ const c={x:mx-px*cv,y:my-py*cv};const s=clip(A,cv?c:B),e=clip(B,cv?c:A);
+ const at={d:`M${s.x},${s.y} Q${c.x},${c.y} ${e.x},${e.y}`,class:"edge "+t,"data-a":a,"data-b":b};
+ if(t!=="inf")at["marker-end"]=`url(#m-${t})`;el("path",at,ge);
+ const lx=.25*s.x+.5*c.x+.25*e.x,ly=.25*s.y+.5*c.y+.25*e.y;
+ const tx=el("text",{x:lx,y:ly+4,"text-anchor":"middle",class:"elab "+t,"data-a":a,"data-b":b},gl);tx.textContent=lab});
+for(const id in N){const n=N[id];const g=el("g",{class:"node "+n.s+(n.badge?" hot":""),"data-id":id,tabindex:0,role:"button","aria-label":n.n},gn);
+ el("rect",{class:"box",x:n.x-W/2,y:n.y-H/2,width:W,height:H,rx:8},g);
+ const nm=el("text",{x:n.x-W/2+12,y:n.y-H/2+24,class:"nm"},g);nm.textContent=n.n;
+ if(n.n.length>20){nm.setAttribute("textLength",W-24);nm.setAttribute("lengthAdjust","spacingAndGlyphs")}
+ const sb=el("text",{x:n.x-W/2+12,y:n.y-H/2+41,class:"sb"},g);sb.textContent=n.sub;
+ n.r.forEach((k,i)=>{const cg=el("g",{class:"ch"},g);const cx=n.x-W/2+22+i*25,cy=n.y+H/2-17;el("circle",{cx,cy,r:10},cg);const t=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle"},cg);t.textContent=k;el("title",{},cg).textContent=R[k]});
+ if(n.badge){const bw=n.badge.length*6.6+16;const bg=el("g",{class:"bd"},g);el("rect",{x:n.x+W/2-bw-8,y:n.y-H/2-9,width:bw,height:18,rx:9},bg);const bt=el("text",{x:n.x+W/2-8-bw/2,y:n.y-H/2+3.5,"text-anchor":"middle"},bg);bt.textContent=n.badge.toUpperCase()}}
+function focus(id){svg.classList.add("focus");svg.querySelectorAll(".on").forEach(x=>x.classList.remove("on"));
+ svg.querySelector(`.node[data-id="${id}"]`).classList.add("on");
+ svg.querySelectorAll(".edge,.elab").forEach(x=>{const a=x.dataset.a,b=(x.dataset.b||"").split(" ");if(a===id||b.includes(id)){x.classList.add("on");[a,...b].forEach(o=>{const nd=svg.querySelector(`.node[data-id="${o}"]`);if(nd)nd.classList.add("on")})}})}
+function clear(){svg.classList.remove("focus");svg.querySelectorAll(".on").forEach(x=>x.classList.remove("on"))}
+svg.querySelectorAll(".node").forEach(g=>{const id=g.dataset.id;g.addEventListener("mouseenter",()=>focus(id));g.addEventListener("mouseleave",clear);g.addEventListener("focus",()=>focus(id));g.addEventListener("blur",clear);
+ g.addEventListener("click",e=>{e.stopPropagation();focus(id)})});
+svg.addEventListener("click",clear);
+const tagName={gov:"Government",np:"Nonprofit",pv:"Private sector"},cards=document.getElementById("cards");
+for(const id in N){const n=N[id];const c=document.createElement("article");c.className="card";
+ c.innerHTML=`<h3>${n.n}<span class="tag ${n.s}">${tagName[n.s]}</span></h3><p>${n.d}</p><p class="role">${n.role}</p>
+ <div><span class="k">Brings</span><div class="res">${n.r.map(k=>`<span>${R[k]}</span>`).join("")}</div></div>
+ <div><span class="k">Formal ties</span><ul>${n.f.map(x=>`<li class="${x.startsWith("$")?"t-fund":""}">${x}</li>`).join("")}</ul></div>
+ <div><span class="k">Informal ties</span><ul>${n.i.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;cards.appendChild(c)}
+})();
+</script>
+
+</body>
+</html>
